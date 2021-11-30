@@ -139,7 +139,7 @@ And let’s put it all together.
 
 ``` r
 finished_data <- raw_imported_ready %>%
-  filter(name=="Lincoln" & sex=="M" & state=="OK" & birth_year >= 2000) %>%
+  filter(name=="Lincoln" & sex=="M" & birth_year >= 2000) %>%
   left_join(natality_07_20_ready, by=c("state" = "state_abbrev", "birth_year" = "year_code")) %>%
   select(state, birth_year, count, births) %>%
   mutate(rate_per_1000 = (count / births) * 1000) 
@@ -217,6 +217,10 @@ finished_data %>%
 
     ## Warning: Removed 3 rows containing missing values (geom_point).
 
+    ## Warning: Removed 7 row(s) containing missing values (geom_path).
+
+    ## Warning: Removed 7 rows containing missing values (geom_point).
+
 ![](baby_names_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
 
 That’s kind of ugly. Let’s try another method.
@@ -262,6 +266,10 @@ ggplot(oklahoma_data) +
     ## Warning: Removed 3 row(s) containing missing values (geom_path).
 
     ## Warning: Removed 3 rows containing missing values (geom_point).
+
+    ## Warning: Removed 7 row(s) containing missing values (geom_path).
+
+    ## Warning: Removed 7 rows containing missing values (geom_point).
 
 ![](baby_names_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
 
