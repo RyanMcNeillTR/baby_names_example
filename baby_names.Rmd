@@ -1,0 +1,225 @@
+---
+title: "The Lincoln Effect"
+output: rmarkdown::github_document
+---
+
+
+
+# The Lincoln Effect
+
+Thanks to some prodding from all-around good guy Ben Welsh at the LA Times, I decided to take a look at Oklahoma boys who are named Lincoln in light of L'Affair Riley at OU. 
+
+So let's roll. 
+
+Load our libraries. 
+
+```{r}
+library(fs)
+library(tidyverse)
+library(ggplot2)
+```
+
+## Baby names
+
+You can [find the baby names here](https://catalog.data.gov/dataset/baby-names-from-social-security-card-applications-state-and-district-of-columbia-data). It's Social Security Administration data based on applications.
+
+Let's download it. 
+
+```{r}
+download.file("https://www.ssa.gov/oact/babynames/state/namesbystate.zip", destfile="./data/namesbystate.zip")
+```
+
+And let's unzip it. 
+
+```{r}
+unzip("./data/namesbystate.zip", exdir="./data/names_by_state")
+```
+
+OK. So we have each state's data in a separate file. That's unfortunate. We'll use the FS package to cycle through each of them and import into a single table. 
+
+First let's grab the path of all the CSVs in the directory. 
+
+```{r}
+raw_file_list <- dir_ls("./data/names_by_state", glob="*.TXT") 
+```
+
+Now read them into a single table...
+
+
+```{r}
+raw_imported_data <- raw_file_list %>%
+  map_df(read_csv, col_names = FALSE, show_col_types = FALSE)
+```
+
+Let's add file headers. 
+
+```{r}
+raw_imported_ready <- raw_imported_data %>%
+  rename(state=X1, sex=X2, birth_year=X3, name=X4, count=X5) 
+```
+
+
+OK, first let's check the popularity of Lincoln. 
+
+```{r}
+raw_imported_ready %>%
+  filter(name=="Lincoln") %>%
+  filter(sex=="M") %>%
+  filter(state=="OK") %>%
+  filter(birth_year >= 2000) %>%
+  ggplot(aes(x=birth_year, y=count)) + 
+  geom_line() +
+  geom_point() + 
+  scale_x_continuous(breaks = seq(2000, 2021, by = 5))
+
+```
+
+
+
+
+OK, that's interesting. But we really need to compare to other states. And to do that, we need to control for the number of births in each state.
+
+To do that, we need the CDC's count of births by state by year. Unfortunately, I don't think you can get state-level births via an API, so I downloaded the data [from CDC Wonder](https://wonder.cdc.gov/). 
+
+I downloaded births by state and by year. 
+
+Let's import the data, clean the column names and trim the dataset.
+
+
+```{r}
+natality_07_20 <- read_tsv("./data/natality_07_20.txt") %>%
+  janitor::clean_names() 
+```
+I noticed they slyly included the totals for each year in the files. Let's toss em. 
+
+```{r}
+natality_07_20 <- natality_07_20 %>%
+  filter(is.na(notes)) %>%
+  select(year_code:births) 
+```
+
+Let's use this little package to add abbreviation names. 
+
+```{r}
+natality_07_20_ready <- natality_07_20 %>%
+  janitor::clean_names() %>%
+  mutate(state_abbrev = usdata::state2abbr(state)) %>%
+  select(year_code, state_abbrev, births)
+```
+
+And let's put it all together. 
+
+```{r}
+finished_data <- raw_imported_ready %>%
+  filter(name=="Lincoln") %>%
+  filter(sex=="M") %>%
+  filter(birth_year >= 2007) %>%
+  left_join(natality_07_20_ready, by=c("state" = "state_abbrev", "birth_year" = "year_code")) %>%
+  select(state, birth_year, count, births) %>%
+  mutate(rate_per_1000 = (count / births) * 1000) 
+```
+
+OK, now let's tinker with ggplot2 and check out Oklahoma's rate over time. 
+
+```{r}
+finished_data %>%
+  filter(state == "OK") %>%
+  ggplot(aes(x=birth_year, y=rate_per_1000)) +
+  geom_line() + 
+  geom_point() +
+  scale_x_continuous(limits=c(2007, 2021)) +
+  annotate("text", x = 2013, y = 2.5, label = "Lincoln Riley named OC") + 
+  annotate("rect", xmin = 2017, xmax = 2020, ymin = 3, ymax = 4,
+  alpha = .2) + 
+  annotate("text", x = 2018.5, y = 2.9, label = "Lincoln Riley named HC") +
+  annotate("rect", xmin = 2015, xmax = 2017, ymin = 1.75, ymax = 3.25,
+  alpha = .2) +
+  xlab("Year of data") +
+  ylab("Rate per 1,000 births") +
+  labs(title="The Lincoln Effect", subtitle = "Boys named Lincoln in Oklahoma", caption="Sources: CDC, Social Security Administration")
+```
+
+
+But like we discussed earlier, we really need to compare against the national rate minus Oklahoma. This little chunk of code calculates that and stores it in an object for later use in ggplot. 
+
+
+```{r}
+national_rate <- finished_data %>%
+  filter(!state=="OK") %>%
+  select(birth_year, count, births) %>%
+  group_by(birth_year) %>%
+  summarise(total_lincolns = sum(count),
+            total_births = sum(births)) %>%
+  mutate(lincoln_rate_per_1000 = (total_lincolns / total_births) * 1000)
+```
+
+
+Ok, let's make a plot. I was tinkering with annotations, but as you'll see below, this method sucks.
+
+```{r}
+finished_data %>%
+  filter(state == "OK") %>%
+  ggplot(aes(x=birth_year, y=rate_per_1000)) +
+  geom_line(color="red") + 
+  geom_point(color="red") +
+  scale_x_continuous(limits=c(2007, 2021)) +
+  geom_line(data=national_rate, aes(x=birth_year, y=lincoln_rate_per_1000)) +
+  geom_point(data=national_rate, aes(x=birth_year, y=lincoln_rate_per_1000)) + 
+  scale_x_continuous(limits=c(2007, 2021)) +
+  annotate("text", x = 2013, y = 2.5, label = "Lincoln Riley named OC") +
+  annotate("rect", xmin = 2017, xmax = 2020, ymin = 3, ymax = 4,
+  alpha = .2) + 
+  annotate("text", x = 2018.5, y = 2.9, label = "Lincoln Riley named HC") +
+  annotate("rect", xmin = 2015, xmax = 2017, ymin = 1.75, ymax = 3.25,
+  alpha = .2) +
+  xlab("Year of data") +
+  ylab("Rate per 1,000 births") +
+  labs(title="The Lincoln Effect", subtitle = "Boys named Lincoln in Oklahoma", caption="Sources: CDC, Social Security Administration")
+```
+
+That's kind of ugly. Let's try another method.
+
+
+Let's make a tribble to hold our time periods. 
+
+```{r}
+coaching_periods <- tribble(
+  ~start, ~end, ~status,
+  2015, 2017, "Offensive Coordinator",
+  2017, 2020, "Head Coach"
+)
+```
+
+And let's use that to introduce better shading. 
+
+Before moving on, let's also store Oklahoma's calculations in its own object for cleaner ggplot code. 
+
+
+```{r}
+oklahoma_data <- finished_data %>%
+  filter(state == "OK")
+```
+
+Let's put it all together. I'm too lazy to tinker with the colors too much.
+
+```{r}
+ggplot(oklahoma_data) + 
+  geom_line(aes(x=birth_year, y=rate_per_1000), color="black") +
+  geom_point(aes(x=birth_year, y=rate_per_1000), color="black") + 
+  geom_line(data=national_rate, aes(x=birth_year, y=lincoln_rate_per_1000), colour = "grey50") + 
+  geom_point(data=national_rate, aes(x=birth_year, y=lincoln_rate_per_1000), colour = "grey50") + 
+  geom_rect(data=coaching_periods, aes(xmin=start, xmax=end, fill = status), ymin = -Inf, ymax = Inf, alpha = 0.2) +
+  scale_fill_manual(values = c("#d1433b", "#d68e89")) +
+  labs(title="The Lincoln Effect", subtitle="Boys named Lincoln in Oklahoma vs. USA", caption="Sources: CDC, SSA") +
+  xlab("Year of Birth") +
+  ylab("Rate per 1,000 births") +
+  annotate("text", x = 2018.5, y = 1.7, label = "Other states") +
+  annotate("text", x = 2018.5, y = 2.9, label = "Oklahoma") 
+
+```
+
+Voila! 
+
+
+
+
