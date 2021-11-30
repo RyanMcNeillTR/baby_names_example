@@ -97,7 +97,7 @@ so I downloaded the data [from CDC Wonder](https://wonder.cdc.gov/).
 
 I downloaded births by state and by year.
 
-Let’s import the data, clean the column names and trim the dataset.
+Let’s import the data and clean the column names..
 
 ``` r
 natality_07_20 <- read_tsv("./data/natality_07_20.txt") %>%
@@ -116,7 +116,7 @@ natality_07_20 <- read_tsv("./data/natality_07_20.txt") %>%
     ## i Specify the column types or set `show_col_types = FALSE` to quiet this message.
 
 I noticed they slyly included the totals for each year in the files.
-Let’s toss em.
+Let’s toss em. And trim column names.
 
 ``` r
 natality_07_20 <- natality_07_20 %>%
@@ -126,7 +126,8 @@ natality_07_20 <- natality_07_20 %>%
 
     ## Warning: One or more parsing issues, see `problems()` for details
 
-Let’s use this little package to add abbreviation names.
+Let’s use [this little package](https://github.com/OpenIntroStat/usdata)
+to add abbreviation names.
 
 ``` r
 natality_07_20_ready <- natality_07_20 %>%

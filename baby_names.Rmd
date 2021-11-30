@@ -78,14 +78,14 @@ To do that, we need the CDC's count of births by state by year. Unfortunately, I
 
 I downloaded births by state and by year. 
 
-Let's import the data, clean the column names and trim the dataset.
+Let's import the data and clean the column names..
 
 
 ```{r}
 natality_07_20 <- read_tsv("./data/natality_07_20.txt") %>%
   janitor::clean_names() 
 ```
-I noticed they slyly included the totals for each year in the files. Let's toss em. 
+I noticed they slyly included the totals for each year in the files. Let's toss em. And trim column names. 
 
 ```{r}
 natality_07_20 <- natality_07_20 %>%
@@ -93,7 +93,9 @@ natality_07_20 <- natality_07_20 %>%
   select(year_code:births) 
 ```
 
-Let's use this little package to add abbreviation names. 
+Let's use [this little package](https://github.com/OpenIntroStat/usdata) to add abbreviation names. 
+
+
 
 ```{r}
 natality_07_20_ready <- natality_07_20 %>%
