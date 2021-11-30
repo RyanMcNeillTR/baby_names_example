@@ -78,10 +78,7 @@ OK, first let’s check the popularity of Lincoln.
 
 ``` r
 raw_imported_ready %>%
-  filter(name=="Lincoln") %>%
-  filter(sex=="M") %>%
-  filter(state=="OK") %>%
-  filter(birth_year >= 2000) %>%
+  filter(name=="Lincoln" & sex=="M" & state=="OK" & birth_year >= 2000) %>%
   ggplot(aes(x=birth_year, y=count)) + 
   geom_line() +
   geom_point() + 
@@ -142,9 +139,7 @@ And let’s put it all together.
 
 ``` r
 finished_data <- raw_imported_ready %>%
-  filter(name=="Lincoln") %>%
-  filter(sex=="M") %>%
-  filter(birth_year >= 2007) %>%
+  filter(name=="Lincoln" & sex=="M" & state=="OK" & birth_year >= 2000) %>%
   left_join(natality_07_20_ready, by=c("state" = "state_abbrev", "birth_year" = "year_code")) %>%
   select(state, birth_year, count, births) %>%
   mutate(rate_per_1000 = (count / births) * 1000) 
@@ -170,6 +165,10 @@ finished_data %>%
   ylab("Rate per 1,000 births") +
   labs(title="The Lincoln Effect", subtitle = "Boys named Lincoln in Oklahoma", caption="Sources: CDC, Social Security Administration")
 ```
+
+    ## Warning: Removed 3 row(s) containing missing values (geom_path).
+
+    ## Warning: Removed 3 rows containing missing values (geom_point).
 
 ![](baby_names_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
 
@@ -214,6 +213,10 @@ finished_data %>%
     ## Scale for 'x' is already present. Adding another scale for 'x', which will
     ## replace the existing scale.
 
+    ## Warning: Removed 3 row(s) containing missing values (geom_path).
+
+    ## Warning: Removed 3 rows containing missing values (geom_point).
+
 ![](baby_names_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
 
 That’s kind of ugly. Let’s try another method.
@@ -255,6 +258,10 @@ ggplot(oklahoma_data) +
   annotate("text", x = 2018.5, y = 1.7, label = "Other states") +
   annotate("text", x = 2018.5, y = 2.9, label = "Oklahoma") 
 ```
+
+    ## Warning: Removed 3 row(s) containing missing values (geom_path).
+
+    ## Warning: Removed 3 rows containing missing values (geom_point).
 
 ![](baby_names_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
 
