@@ -104,11 +104,11 @@ natality_07_20 <- read_tsv("./data/natality_07_20.txt") %>%
   janitor::clean_names() 
 ```
 
-    ## Rows: 748 Columns: 6
+    ## Rows: 2177 Columns: 8
 
     ## -- Column specification --------------------------------------------------------
     ## Delimiter: "\t"
-    ## chr (3): Notes, State, State Code
+    ## chr (5): Notes, State, State Code, Gender, Gender Code
     ## dbl (3): Year, Year Code, Births
 
     ## 
@@ -121,6 +121,7 @@ Let’s toss em. And trim column names.
 ``` r
 natality_07_20 <- natality_07_20 %>%
   filter(is.na(notes)) %>%
+  filter(gender=="Male") %>%
   select(year_code:births) 
 ```
 
@@ -148,32 +149,9 @@ finished_data <- raw_imported_ready %>%
   mutate(rate_per_1000 = (count / births) * 1000) 
 ```
 
-OK, now let’s tinker with ggplot2 and check out Oklahoma’s rate over
-time.
-
-``` r
-finished_data %>%
-  filter(state == "OK") %>%
-  ggplot(aes(x=birth_year, y=rate_per_1000)) +
-  geom_line() + 
-  geom_point() +
-  scale_x_continuous(limits=c(2007, 2021)) +
-  annotate("text", x = 2013, y = 2.5, label = "Lincoln Riley named OC") + 
-  annotate("rect", xmin = 2017, xmax = 2020, ymin = 3, ymax = 4,
-  alpha = .2) + 
-  annotate("text", x = 2018.5, y = 2.9, label = "Lincoln Riley named HC") +
-  annotate("rect", xmin = 2015, xmax = 2017, ymin = 1.75, ymax = 3.25,
-  alpha = .2) +
-  xlab("Year of data") +
-  ylab("Rate per 1,000 births") +
-  labs(title="The Lincoln Effect", subtitle = "Boys named Lincoln in Oklahoma", caption="Sources: CDC, Social Security Administration")
-```
-
-![](baby_names_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
-
-But like we discussed earlier, we really need to compare against the
-national rate minus Oklahoma. This little chunk of code calculates that
-and stores it in an object for later use in ggplot.
+We really need to compare against the national rate minus Oklahoma. This
+little chunk of code calculates that and stores it in an object for
+later use in ggplot.
 
 ``` r
 national_rate <- finished_data %>%
@@ -185,37 +163,6 @@ national_rate <- finished_data %>%
             total_births = sum(births)) %>%
   mutate(lincoln_rate_per_1000 = (total_lincolns / total_births) * 1000)
 ```
-
-Ok, let’s make a plot. I was tinkering with annotations, but as you’ll
-see below, this method sucks.
-
-``` r
-finished_data %>%
-  filter(state == "OK") %>%
-  ggplot(aes(x=birth_year, y=rate_per_1000)) +
-  geom_line(color="red") + 
-  geom_point(color="red") +
-  scale_x_continuous(limits=c(2007, 2021)) +
-  geom_line(data=national_rate, aes(x=birth_year, y=lincoln_rate_per_1000)) +
-  geom_point(data=national_rate, aes(x=birth_year, y=lincoln_rate_per_1000)) + 
-  scale_x_continuous(limits=c(2007, 2021)) +
-  annotate("text", x = 2013, y = 2.5, label = "Lincoln Riley named OC") +
-  annotate("rect", xmin = 2017, xmax = 2020, ymin = 3, ymax = 4,
-  alpha = .2) + 
-  annotate("text", x = 2018.5, y = 2.9, label = "Lincoln Riley named HC") +
-  annotate("rect", xmin = 2015, xmax = 2017, ymin = 1.75, ymax = 3.25,
-  alpha = .2) +
-  xlab("Year of data") +
-  ylab("Rate per 1,000 births") +
-  labs(title="The Lincoln Effect", subtitle = "Boys named Lincoln in Oklahoma", caption="Sources: CDC, Social Security Administration")
-```
-
-    ## Scale for 'x' is already present. Adding another scale for 'x', which will
-    ## replace the existing scale.
-
-![](baby_names_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
-
-That’s kind of ugly. Let’s try another method.
 
 Let’s make a tribble to hold our time periods.
 
@@ -250,11 +197,11 @@ ggplot(oklahoma_data) +
   scale_fill_manual(values = c("#d1433b", "#d68e89")) +
   labs(title="The Lincoln Effect", subtitle="Boys named Lincoln in Oklahoma vs. USA", caption="Sources: CDC, SSA") +
   xlab("Year of Birth") +
-  ylab("Rate per 1,000 births") +
-  annotate("text", x = 2018.5, y = 1.7, label = "Other states") +
-  annotate("text", x = 2018.5, y = 2.9, label = "Oklahoma") 
+  ylab("Rate per 1,000 boy births") +
+  annotate("text", x = 2018.5, y = 2.9, label = "Other states") +
+  annotate("text", x = 2018.5, y = 5.5, label = "Oklahoma") 
 ```
 
-![](baby_names_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
+![](baby_names_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
 
 Voila!
