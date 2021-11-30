@@ -3,13 +3,9 @@ title: "The Lincoln Effect"
 output: rmarkdown::github_document
 ---
 
-
-
-# The Lincoln Effect
-
 Thanks to some prodding from all-around good guy Ben Welsh at the LA Times, I decided to take a look at Oklahoma boys who are named Lincoln in light of L'Affair Riley at OU. 
 
-So let's roll. 
+It's a good opportunity to tinker with ggplot's features. 
 
 Load our libraries. 
 
@@ -23,10 +19,12 @@ library(ggplot2)
 
 You can [find the baby names here](https://catalog.data.gov/dataset/baby-names-from-social-security-card-applications-state-and-district-of-columbia-data). It's Social Security Administration data based on applications.
 
-Let's download it. 
+One limitation to this data is that it only includes names where n>5. 
+
+Below is the code to download it, but I've commented it out because the data is in the Github repo. 
 
 ```{r}
-download.file("https://www.ssa.gov/oact/babynames/state/namesbystate.zip", destfile="./data/namesbystate.zip")
+#download.file("https://www.ssa.gov/oact/babynames/state/namesbystate.zip", destfile="./data/namesbystate.zip")
 ```
 
 And let's unzip it. 
