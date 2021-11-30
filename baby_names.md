@@ -137,9 +137,11 @@ natality_07_20_ready <- natality_07_20 %>%
 
 And let’s put it all together.
 
+Note: Limiting to \>= 2007 to match natality data.
+
 ``` r
 finished_data <- raw_imported_ready %>%
-  filter(name=="Lincoln" & sex=="M" & birth_year >= 2000) %>%
+  filter(name=="Lincoln" & sex=="M" & birth_year >= 2007) %>%
   left_join(natality_07_20_ready, by=c("state" = "state_abbrev", "birth_year" = "year_code")) %>%
   select(state, birth_year, count, births) %>%
   mutate(rate_per_1000 = (count / births) * 1000) 
@@ -166,10 +168,6 @@ finished_data %>%
   labs(title="The Lincoln Effect", subtitle = "Boys named Lincoln in Oklahoma", caption="Sources: CDC, Social Security Administration")
 ```
 
-    ## Warning: Removed 3 row(s) containing missing values (geom_path).
-
-    ## Warning: Removed 3 rows containing missing values (geom_point).
-
 ![](baby_names_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
 
 But like we discussed earlier, we really need to compare against the
@@ -179,6 +177,7 @@ and stores it in an object for later use in ggplot.
 ``` r
 national_rate <- finished_data %>%
   filter(!state=="OK") %>%
+  filter(birth_year >= 2007) %>%
   select(birth_year, count, births) %>%
   group_by(birth_year) %>%
   summarise(total_lincolns = sum(count),
@@ -212,14 +211,6 @@ finished_data %>%
 
     ## Scale for 'x' is already present. Adding another scale for 'x', which will
     ## replace the existing scale.
-
-    ## Warning: Removed 3 row(s) containing missing values (geom_path).
-
-    ## Warning: Removed 3 rows containing missing values (geom_point).
-
-    ## Warning: Removed 7 row(s) containing missing values (geom_path).
-
-    ## Warning: Removed 7 rows containing missing values (geom_point).
 
 ![](baby_names_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
 
@@ -262,14 +253,6 @@ ggplot(oklahoma_data) +
   annotate("text", x = 2018.5, y = 1.7, label = "Other states") +
   annotate("text", x = 2018.5, y = 2.9, label = "Oklahoma") 
 ```
-
-    ## Warning: Removed 3 row(s) containing missing values (geom_path).
-
-    ## Warning: Removed 3 rows containing missing values (geom_point).
-
-    ## Warning: Removed 7 row(s) containing missing values (geom_path).
-
-    ## Warning: Removed 7 rows containing missing values (geom_point).
 
 ![](baby_names_files/figure-gfm/unnamed-chunk-17-1.png)<!-- -->
 
